@@ -1,0 +1,141 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@companionx/db';
+import { generateEmbedding, rankCandidates, type CompanionCandidate } from '@companionx/utils';
+import { z } from 'zod';
+
+const searchSchema = z.object({
+  query: z.string().optional(),
+  city: z.string().optional(),
+  language: z.string().optional(),
+  date: z.string().optional(),
+  hasVehicle: z.boolean().optional(),
+  maxPriceMXN: z.number().optional(),
+  limit: z.number().default(10),
+});
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const params = searchSchema.parse({
+      query: searchParams.get('query') || undefined,
+      city: searchParams.get('city') || undefined,
+      language: searchParams.get('language') || undefined,
+      date: searchParams.get('date') || undefined,
+      hasVehicle: searchParams.get('hasVehicle') === 'true',
+      maxPriceMXN: searchParams.get('maxPriceMXN') ? parseInt(searchParams.get('maxPriceMXN')!) : undefined,
+      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10,
+    });
+
+    let embedding: number[] | null = null;
+
+    // Generate embedding if query provided
+    if (params.query) {
+      embedding = await generateEmbedding(params.query);
+    }
+
+    // Build where clause
+    const where: any = {
+      isActive: true,
+      user: {
+        isActive: true,
+        isBanned: false,
+      },
+    };
+
+    if (params.city) {
+      where.cities = { has: params.city };
+    }
+
+    if (params.hasVehicle) {
+      where.hasVehicle = true;
+    }
+
+    // Fetch candidates (first 50 for reranking)
+    // In production, use pgvector for similarity search
+    const companions = await prisma.companionProfile.findMany({
+      where,
+      take: 50,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: false,
+            avatarUrl: true,
+            languages: true,
+            rating: true,
+            ratingsCount: true,
+            kycLevel: true,
+            isBanned: true,
+          },
+        },
+      },
+    });
+
+    // Map to CompanionCandidate format
+    const candidates: CompanionCandidate[] = companions.map((c) => ({
+      id: c.id,
+      userId: c.userId,
+      name: c.user.name,
+      avatarUrl: c.user.avatarUrl || undefined,
+      languages: c.user.languages,
+      cities: c.cities,
+      baseCity: c.baseCity || undefined,
+      interests: c.interests,
+      hasVehicle: c.hasVehicle,
+      vehicleType: c.vehicleType || undefined,
+      certifications: c.certifications,
+      hourlyRateMXN: c.hourlyRateMXN,
+      rating: c.user.rating,
+      ratingsCount: c.user.ratingsCount,
+      isVerified: c.isVerified,
+      kycLevel: Number(c.user.kycLevel.replace('V', '')),
+      isBanned: c.user.isBanned,
+      similarityScore: 0, // TODO: Compute from pgvector
+    }));
+
+    // Apply ranking
+    const ranked = rankCandidates(
+      candidates,
+      {
+        preferredLanguages: params.language ? [params.language] : [],
+        targetCity: params.city || '',
+        maxBudgetMXN: params.maxPriceMXN,
+        needsVehicle: params.hasVehicle,
+      }
+    );
+
+    // Return top N
+    const results = ranked.slice(0, params.limit).map((r) => ({
+      companion: {
+        id: r.candidate.id,
+        userId: r.candidate.userId,
+        name: r.candidate.name,
+        avatarUrl: r.candidate.avatarUrl,
+        languages: r.candidate.languages,
+        cities: r.candidate.cities,
+        baseCity: r.candidate.baseCity,
+        interests: r.candidate.interests,
+        hasVehicle: r.candidate.hasVehicle,
+        vehicleType: r.candidate.vehicleType,
+        hourlyRateMXN: r.candidate.hourlyRateMXN,
+        rating: r.candidate.rating,
+        ratingsCount: r.candidate.ratingsCount,
+        isVerified: r.candidate.isVerified,
+      },
+      score: r.totalScore,
+      reasons: r.reasons,
+    }));
+
+    return NextResponse.json({
+      results,
+      count: results.length,
+    });
+  } catch (error) {
+    console.error('Search error:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

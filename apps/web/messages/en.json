@@ -1,0 +1,125 @@
+{
+  "common": {
+    "appName": "CompanionX World 2026",
+    "tagline": "Your World Cup, Accompanied",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear"
+  },
+  "landing": {
+    "hero": {
+      "title": "Your World Cup, Accompanied",
+      "subtitle": "AI connects you with verified local companions who share your passions and speak your language",
+      "ctaVisitor": "I'm a Visitor",
+      "ctaCompanion": "Become a Companion"
+    },
+    "features": {
+      "title": "Why CompanionX?",
+      "aiMatching": {
+        "title": "AI-Powered Matching",
+        "description": "Our intelligent system finds the perfect companion based on your interests, language, and location"
+      },
+      "verified": {
+        "title": "Verified & Safe",
+        "description": "All companions are ID-verified with multi-level KYC and safety checks"
+      },
+      "local": {
+        "title": "True Local Experience",
+        "description": "Discover hidden gems, authentic cuisine, and local culture with certified guides"
+      },
+      "secure": {
+        "title": "Secure Payments",
+        "description": "Book with confidence through our secure payment system powered by Stripe"
+      }
+    }
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "onboarding": {
+    "visitor": {
+      "title": "Welcome, Visitor!",
+      "subtitle": "Let's personalize your World Cup experience",
+      "step1": "Your Details",
+      "step2": "Your Trip",
+      "step3": "Your Interests",
+      "name": "Full Name",
+      "country": "Country",
+      "language": "Primary Language",
+      "cities": "Which cities will you visit?",
+      "dates": "When are you visiting?",
+      "budget": "Daily Budget (MXN)",
+      "interests": "What interests you?",
+      "complete": "Complete Profile"
+    },
+    "companion": {
+      "title": "Become a Companion",
+      "subtitle": "Share your city and earn money during the World Cup",
+      "step1": "Your Details",
+      "step2": "Your Services",
+      "step3": "Verification",
+      "languages": "Languages you speak",
+      "cities": "Cities you operate in",
+      "vehicle": "Do you have a vehicle?",
+      "vehicleType": "Vehicle type",
+      "certifications": "Certifications",
+      "hourlyRate": "Hourly Rate (MXN)",
+      "bio": "Tell visitors about yourself",
+      "uploadId": "Upload ID for verification"
+    }
+  },
+  "search": {
+    "title": "Find Your Companion",
+    "filters": {
+      "city": "City",
+      "language": "Language",
+      "date": "Date",
+      "vehicle": "Has Vehicle",
+      "maxPrice": "Max Price/Hour"
+    },
+    "results": {
+      "showing": "Showing {count} companions",
+      "noResults": "No companions found. Try adjusting your filters.",
+      "perHour": "/hour",
+      "verified": "Verified",
+      "reviews": "{count} reviews",
+      "match": "Why this match?"
+    }
+  },
+  "profile": {
+    "about": "About",
+    "languages": "Languages",
+    "interests": "Interests",
+    "availability": "Availability",
+    "reviews": "Reviews",
+    "bookNow": "Book Now",
+    "startChat": "Start Chat"
+  },
+  "booking": {
+    "title": "Complete Your Booking",
+    "date": "Date",
+    "time": "Time",
+    "duration": "Duration",
+    "hours": "hours",
+    "total": "Total",
+    "platformFee": "Platform Fee",
+    "paymentMethod": "Payment Method",
+    "confirmBooking": "Confirm & Pay",
+    "cancellationPolicy": "Cancellation Policy"
+  }
+}

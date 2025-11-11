@@ -1,0 +1,125 @@
+{
+  "common": {
+    "appName": "CompanionX World 2026",
+    "tagline": "Tu Mundial, Acompañado",
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpiar"
+  },
+  "landing": {
+    "hero": {
+      "title": "Tu Mundial, Acompañado",
+      "subtitle": "La IA te conecta con acompañantes locales verificados que comparten tus pasiones y hablan tu idioma",
+      "ctaVisitor": "Soy Visitante",
+      "ctaCompanion": "Ser Acompañante"
+    },
+    "features": {
+      "title": "¿Por qué CompanionX?",
+      "aiMatching": {
+        "title": "Matching con IA",
+        "description": "Nuestro sistema inteligente encuentra al acompañante perfecto según tus intereses, idioma y ubicación"
+      },
+      "verified": {
+        "title": "Verificado y Seguro",
+        "description": "Todos los acompañantes están verificados con ID y múltiples niveles de validación KYC"
+      },
+      "local": {
+        "title": "Experiencia Local Auténtica",
+        "description": "Descubre joyas ocultas, gastronomía auténtica y cultura local con guías certificados"
+      },
+      "secure": {
+        "title": "Pagos Seguros",
+        "description": "Reserva con confianza a través de nuestro sistema de pagos seguro powered by Stripe"
+      }
+    }
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar Sesión",
+    "email": "Correo",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?"
+  },
+  "onboarding": {
+    "visitor": {
+      "title": "¡Bienvenido, Visitante!",
+      "subtitle": "Personalicemos tu experiencia del Mundial",
+      "step1": "Tus Datos",
+      "step2": "Tu Viaje",
+      "step3": "Tus Intereses",
+      "name": "Nombre Completo",
+      "country": "País",
+      "language": "Idioma Principal",
+      "cities": "¿Qué ciudades visitarás?",
+      "dates": "¿Cuándo nos visitas?",
+      "budget": "Presupuesto Diario (MXN)",
+      "interests": "¿Qué te interesa?",
+      "complete": "Completar Perfil"
+    },
+    "companion": {
+      "title": "Conviértete en Acompañante",
+      "subtitle": "Comparte tu ciudad y gana dinero durante el Mundial",
+      "step1": "Tus Datos",
+      "step2": "Tus Servicios",
+      "step3": "Verificación",
+      "languages": "Idiomas que hablas",
+      "cities": "Ciudades donde operas",
+      "vehicle": "¿Tienes vehículo?",
+      "vehicleType": "Tipo de vehículo",
+      "certifications": "Certificaciones",
+      "hourlyRate": "Tarifa por Hora (MXN)",
+      "bio": "Cuéntale a los visitantes sobre ti",
+      "uploadId": "Sube tu ID para verificación"
+    }
+  },
+  "search": {
+    "title": "Encuentra tu Acompañante",
+    "filters": {
+      "city": "Ciudad",
+      "language": "Idioma",
+      "date": "Fecha",
+      "vehicle": "Tiene Vehículo",
+      "maxPrice": "Precio Máx/Hora"
+    },
+    "results": {
+      "showing": "Mostrando {count} acompañantes",
+      "noResults": "No se encontraron acompañantes. Intenta ajustar tus filtros.",
+      "perHour": "/hora",
+      "verified": "Verificado",
+      "reviews": "{count} reseñas",
+      "match": "¿Por qué este match?"
+    }
+  },
+  "profile": {
+    "about": "Acerca de",
+    "languages": "Idiomas",
+    "interests": "Intereses",
+    "availability": "Disponibilidad",
+    "reviews": "Reseñas",
+    "bookNow": "Reservar Ahora",
+    "startChat": "Iniciar Chat"
+  },
+  "booking": {
+    "title": "Completa tu Reserva",
+    "date": "Fecha",
+    "time": "Hora",
+    "duration": "Duración",
+    "hours": "horas",
+    "total": "Total",
+    "platformFee": "Comisión de Plataforma",
+    "paymentMethod": "Método de Pago",
+    "confirmBooking": "Confirmar y Pagar",
+    "cancellationPolicy": "Política de Cancelación"
+  }
+}

@@ -1,0 +1,289 @@
+// CompanionX World 2026 - Database Schema
+// Requires PostgreSQL with pgvector extension
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  VISITOR
+  COMPANION
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  DISPUTED
+}
+
+enum KYCLevel {
+  V0 // Email only
+  V1 // ID match
+  V2 // Selfie liveness
+  V3 // Address proof
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  role          Role     @default(VISITOR)
+  email         String   @unique
+  phone         String?  @unique
+  name          String
+  country       String?
+  languageMain  String?  // ISO 639-1: en, es, fr, etc.
+  languages     String[] // ["es", "en", "fr"]
+  avatarUrl     String?
+  kycLevel      KYCLevel @default(V0)
+  kycData       Json?    // Stripe Identity/Persona metadata
+  rating        Float    @default(0)
+  ratingsCount  Int      @default(0)
+  isActive      Boolean  @default(true)
+  isBanned      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  companion        CompanionProfile?
+  visitor          VisitorProfile?
+  sentMessages     Message[]         @relation("MessageSender")
+  receivedMessages Message[]         @relation("MessageReceiver")
+  bookingsAsVisitor Booking[]        @relation("VisitorBookings")
+  bookingsAsCompanion Booking[]      @relation("CompanionBookings")
+  givenReviews     Review[]          @relation("ReviewGiver")
+  receivedReviews  Review[]          @relation("ReviewReceiver")
+
+  @@index([email])
+  @@index([role])
+}
+
+model CompanionProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Location & Mobility
+  cities          String[] // ["CDMX", "GDL", "MTY"]
+  baseCity        String?  // Primary city
+  hasVehicle      Boolean  @default(false)
+  vehicleType     String?  // "car", "moto", "suv", "van", "none"
+  vehiclePlate    String?
+
+  // Skills & Interests
+  interests       String[] // ["gastronomia", "futbol", "cultura", "nightlife", "compras"]
+  certifications  String[] // ["first_aid", "driver", "tour_guide", "translator"]
+  spokenLanguages Json?    // {"es": "native", "en": "fluent", "fr": "intermediate"}
+
+  // Pricing (in MXN)
+  hourlyRateMXN   Int
+  block3hRateMXN  Int?
+  block6hRateMXN  Int?
+  block12hRateMXN Int?
+
+  // Profile
+  bio             String?  @db.Text
+  tagline         String?  // Short pitch
+  photos          String[] // URLs from Supabase Storage
+
+  // Availability & Status
+  isActive        Boolean  @default(true)
+  isVerified      Boolean  @default(false)
+  totalBookings   Int      @default(0)
+  completedBookings Int    @default(0)
+
+  // AI Embedding (pgvector - 1536 dimensions for text-embedding-3-large)
+  embedding       Unsupported("vector(1536)")?
+  embeddingUpdatedAt DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  availability    Availability[]
+
+  @@index([baseCity])
+  @@index([isActive, isVerified])
+}
+
+model VisitorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Trip Details
+  fifaCities      String[] // Planned FIFA host cities
+  arrivalDate     DateTime?
+  departureDate   DateTime?
+  travelingFrom   String?  // Country code
+
+  // Preferences
+  budgetMXN       Int?
+  interests       String[] // Same taxonomy as companions
+  preferredLanguages String[] // Priority order
+  needsAccessibility Boolean @default(false)
+
+  // Profile
+  bio             String?  @db.Text
+
+  // AI Embedding
+  embedding       Unsupported("vector(1536)")?
+  embeddingUpdatedAt DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Availability {
+  id          String   @id @default(cuid())
+  companionId String
+  companion   CompanionProfile @relation(fields: [companionId], references: [id], onDelete: Cascade)
+
+  from        DateTime
+  to          DateTime
+  city        String
+  isBooked    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@index([companionId, from, to])
+  @@index([city, from, to])
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  visitorId       String
+  visitor         User          @relation("VisitorBookings", fields: [visitorId], references: [id])
+  companionId     String
+  companion       User          @relation("CompanionBookings", fields: [companionId], references: [id])
+
+  // Details
+  city            String
+  from            DateTime
+  to              DateTime
+  durationHours   Float
+
+  // Pricing
+  priceMXN        Int
+  platformFeeMXN  Int
+  companionPayoutMXN Int
+
+  // Status
+  status          BookingStatus @default(PENDING)
+
+  // Stripe
+  stripePiId      String?       @unique // Payment Intent ID
+  stripeTransferId String?      // Connect payout ID
+
+  // Metadata
+  notes           String?       @db.Text
+  cancellationReason String?    @db.Text
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+  canceledAt      DateTime?
+
+  messages        Message[]
+  review          Review?
+
+  @@index([visitorId, status])
+  @@index([companionId, status])
+  @@index([from, to])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  bookingId   String?
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  fromUserId  String
+  fromUser    User     @relation("MessageSender", fields: [fromUserId], references: [id])
+  toUserId    String
+  toUser      User     @relation("MessageReceiver", fields: [toUserId], references: [id])
+
+  content     String   @db.Text
+
+  // Moderation
+  moderated   Boolean  @default(false)
+  flagged     Boolean  @default(false)
+  flagReason  String?
+  moderatedBy String?  // Admin user ID
+  moderatedAt DateTime?
+
+  // Metadata
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+  @@index([fromUserId, toUserId])
+  @@index([flagged])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  visitorId   String
+  visitor     User     @relation("ReviewGiver", fields: [visitorId], references: [id])
+  companionId String
+  companion   User     @relation("ReviewReceiver", fields: [companionId], references: [id])
+
+  rating      Int      // 1-5
+  tags        String[] // ["puntual", "seguro", "gran_guia", "flexible", "profesional"]
+  comment     String?  @db.Text
+
+  // Response
+  response    String?  @db.Text
+  respondedAt DateTime?
+
+  // Moderation
+  isVisible   Boolean  @default(true)
+  flagged     Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@index([companionId, isVisible])
+  @@index([rating])
+}
+
+model AdminLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String   // "ban_user", "approve_kyc", "adjust_ranking_weights", etc.
+  targetType  String?  // "user", "booking", "message", "review"
+  targetId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([adminId, createdAt])
+  @@index([action])
+}
+
+model RankingWeights {
+  id          String   @id @default(cuid())
+  name        String   @unique // "default", "experiment_v2", etc.
+  weights     Json     // {"language": 3, "city": 4, "availability": 3, ...}
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

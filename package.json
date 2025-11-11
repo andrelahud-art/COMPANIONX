@@ -1,0 +1,34 @@
+{
+  "name": "companionx-world-2026",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CompanionX World 2026 - AI-powered platform to connect FIFA World Cup visitors with local companions",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "test": "turbo run test",
+    "db:migrate": "pnpm --filter @companionx/db migrate",
+    "db:seed": "pnpm --filter @companionx/db seed",
+    "db:studio": "pnpm --filter @companionx/db studio",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "eslint": "^8.56.0",
+    "husky": "^8.0.3",
+    "prettier": "^3.2.4",
+    "turbo": "^1.12.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.17.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
