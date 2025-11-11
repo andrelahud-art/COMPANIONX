@@ -284,18 +284,24 @@ The app is installable on iOS 16.4+ as a Progressive Web App.
 
 ### Vercel (Recommended)
 
+**Note:** The project includes `vercel.json` with automatic configuration for pnpm 8.15.0 via corepack.
+
 1. **Push to GitHub**
 
 2. **Import to Vercel:**
    - Connect GitHub repo
-   - Framework preset: Next.js
-   - Root directory: `apps/web`
-   - Build command: `cd ../.. && pnpm build --filter=@companionx/web`
-   - Install command: `cd ../.. && pnpm install`
+   - Framework preset: **Next.js**
+   - Root directory: Leave empty (uses `vercel.json` config)
+   - Build/Install commands: Automatically configured via `vercel.json`
 
-3. **Set environment variables** in Vercel dashboard
+3. **Set environment variables** in Vercel dashboard (copy from `.env.example`)
 
 4. **Deploy!**
+
+**Troubleshooting:**
+- If build fails with pnpm version error, the `vercel.json` should handle it automatically via corepack
+- Ensure Node.js version is 18.x or higher in Vercel project settings
+- Check build logs for specific errors
 
 ### Supabase Setup
 
