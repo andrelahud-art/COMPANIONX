@@ -27,16 +27,6 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10,
     });
 
-    type CompanionFindManyArgs = Parameters<typeof prisma.companionProfile.findMany>[0];
-    type CompanionWhere = CompanionFindManyArgs extends { where?: infer W }
-      ? NonNullable<W>
-      : never;
-    type CompanionInclude = CompanionFindManyArgs extends { include?: infer I }
-      ? NonNullable<I>
-      : never;
-
-    // Build where clause
-    const where: CompanionWhere = {
     // Build where clause
     const where: Prisma.CompanionProfileWhereInput = {
       isActive: true,
@@ -69,9 +59,6 @@ export async function GET(request: NextRequest) {
           isBanned: true,
         },
       },
-    } satisfies CompanionInclude;
-
-    const companions = await prisma.companionProfile.findMany({
     } satisfies Prisma.CompanionProfileInclude;
 
     type CompanionWithUser = Prisma.CompanionProfileGetPayload<{
