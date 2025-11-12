@@ -284,7 +284,7 @@ The app is installable on iOS 16.4+ as a Progressive Web App.
 
 ### Vercel (Recommended)
 
-**Note:** The project includes `vercel.json` with automatic configuration for pnpm 8.15.0 via corepack.
+**Note:** The project includes `vercel.json` that pins pnpm 8.15.1 in the install/build commands, so Vercel uses the same version as local development.
 
 1. **Push to GitHub**
 
@@ -299,7 +299,7 @@ The app is installable on iOS 16.4+ as a Progressive Web App.
 4. **Deploy!**
 
 **Troubleshooting:**
-- If build fails with pnpm version error, the `vercel.json` should handle it automatically via corepack
+- If build fails with a pnpm version error, confirm Vercel picked up the `vercel.json` commands that invoke `npx pnpm@8.15.1`
 - Ensure Node.js version is 18.x or higher in Vercel project settings
 - Check build logs for specific errors
 
