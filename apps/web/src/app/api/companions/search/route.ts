@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma, Prisma } from '@companionx/db';
+import { prisma } from '@companionx/db';
+import type { Prisma } from '@companionx/db';
 import { rankCandidates, type CompanionCandidate } from '@companionx/utils';
 import { z } from 'zod';
 
