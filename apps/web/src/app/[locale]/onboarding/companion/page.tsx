@@ -62,11 +62,37 @@ export default function CompanionOnboardingPage() {
 
   const handleComplete = async () => {
     setLoading(true);
-    // TODO: Save onboarding data to database
-    // For now, just redirect to home
-    setTimeout(() => {
-      router.push('/');
-    }, 1000);
+
+    try {
+      const response = await fetch('/api/companion/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cities: selectedCities,
+          interests: selectedInterests,
+          spokenLanguages: selectedLanguages,
+          hourlyRateMXN: parseInt(hourlyRate),
+          bio: bio.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Error al guardar el perfil');
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to companion dashboard
+      router.push('/companion/dashboard');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al guardar el perfil. Por favor intenta de nuevo.');
+      setLoading(false);
+    }
   };
 
   return (
