@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { GradientButton } from '@/components/ui/gradient-button';
@@ -25,7 +24,6 @@ const INTERESTS = [
 ];
 
 export default function VisitorOnboardingPage() {
-  const t = useTranslations();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedCities, setSelectedCities] = useState<string[]>([]);

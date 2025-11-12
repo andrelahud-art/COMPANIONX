@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function LoginPage() {
-  const t = useTranslations();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
