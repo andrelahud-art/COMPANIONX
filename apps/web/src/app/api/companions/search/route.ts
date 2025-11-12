@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@companionx/db';
+import type { Prisma } from '@companionx/db';
 import { rankCandidates, type CompanionCandidate } from '@companionx/utils';
 import { z } from 'zod';
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.CompanionProfileWhereInput = {
       isActive: true,
       user: {
         isActive: true,
@@ -45,45 +46,50 @@ export async function GET(request: NextRequest) {
 
     // Fetch candidates (first 50 for reranking)
     // In production, use pgvector for similarity search
-    const companions = await prisma.companionProfile.findMany({
-      where,
-      take: 50,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: false,
-            avatarUrl: true,
-            languages: true,
-            rating: true,
-            ratingsCount: true,
-            kycLevel: true,
-            isBanned: true,
-          },
+    const companionInclude = {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          languages: true,
+          rating: true,
+          ratingsCount: true,
+          kycLevel: true,
+          isBanned: true,
         },
       },
+    } satisfies Prisma.CompanionProfileInclude;
+
+    type CompanionWithUser = Prisma.CompanionProfileGetPayload<{
+      include: typeof companionInclude;
+    }>;
+
+    const companions: CompanionWithUser[] = await prisma.companionProfile.findMany({
+      where,
+      take: 50,
+      include: companionInclude,
     });
 
     // Map to CompanionCandidate format
-    const candidates: CompanionCandidate[] = companions.map((c) => ({
-      id: c.id,
-      userId: c.userId,
-      name: c.user.name,
-      avatarUrl: c.user.avatarUrl || undefined,
-      languages: c.user.languages,
-      cities: c.cities,
-      baseCity: c.baseCity || undefined,
-      interests: c.interests,
-      hasVehicle: c.hasVehicle,
-      vehicleType: c.vehicleType || undefined,
-      certifications: c.certifications,
-      hourlyRateMXN: c.hourlyRateMXN,
-      rating: c.user.rating,
-      ratingsCount: c.user.ratingsCount,
-      isVerified: c.isVerified,
-      kycLevel: Number(c.user.kycLevel.replace('V', '')),
-      isBanned: c.user.isBanned,
+    const candidates: CompanionCandidate[] = companions.map((companion) => ({
+      id: companion.id,
+      userId: companion.userId,
+      name: companion.user.name,
+      avatarUrl: companion.user.avatarUrl || undefined,
+      languages: companion.user.languages,
+      cities: companion.cities,
+      baseCity: companion.baseCity || undefined,
+      interests: companion.interests,
+      hasVehicle: companion.hasVehicle,
+      vehicleType: companion.vehicleType || undefined,
+      certifications: companion.certifications,
+      hourlyRateMXN: companion.hourlyRateMXN,
+      rating: companion.user.rating,
+      ratingsCount: companion.user.ratingsCount,
+      isVerified: companion.isVerified,
+      kycLevel: Number(companion.user.kycLevel.replace('V', '')),
+      isBanned: companion.user.isBanned,
       similarityScore: 0, // TODO: Compute from pgvector
     }));
 
