@@ -121,8 +121,9 @@ This guide walks you through deploying CompanionX to production.
    - Framework Preset: **Next.js**
    - Root Directory: `apps/web`
    - Override settings:
-     - Build Command: `cd ../.. && pnpm build --filter=@companionx/web`
-     - Install Command: `cd ../.. && pnpm install`
+     - Build Command: `cd ../.. && npx pnpm@8.15.1 --filter @companionx/web build`
+     - Install Command: `cd ../.. && npx pnpm@8.15.1 install`
+     - (If these overrides are skipped, Vercel's bundled pnpm 6.35.1 still works thanks to the relaxed `engines.pnpm` range.)
 
 3. **Configure Environment Variables**
 

@@ -65,7 +65,7 @@ CompanionX uses AI-powered matching to connect international visitors with verif
 ### Prerequisites
 
 - Node.js 18.17+
-- pnpm 8+
+- pnpm 8.15.1 (recommended) — the repo also tolerates pnpm 6.35.1 for hosted builds that cannot upgrade yet
 - PostgreSQL with pgvector extension (Supabase recommended)
 - OpenAI API key
 - Stripe account
@@ -284,7 +284,7 @@ The app is installable on iOS 16.4+ as a Progressive Web App.
 
 ### Vercel (Recommended)
 
-**Note:** The project includes `vercel.json` with automatic configuration for pnpm 8.15.0 via corepack.
+**Note:** The project includes `vercel.json` that pins pnpm 8.15.1 in the install/build commands, while the package manifest allows Vercel's fallback pnpm 6.35.1 to run if custom commands are ignored.
 
 1. **Push to GitHub**
 
@@ -299,7 +299,7 @@ The app is installable on iOS 16.4+ as a Progressive Web App.
 4. **Deploy!**
 
 **Troubleshooting:**
-- If build fails with pnpm version error, the `vercel.json` should handle it automatically via corepack
+- If build fails with a pnpm version error, confirm Vercel picked up the `vercel.json` commands that invoke `npx pnpm@8.15.1`; otherwise its legacy pnpm 6.35.1 will still satisfy the relaxed `engines.pnpm` range
 - Ensure Node.js version is 18.x or higher in Vercel project settings
 - Check build logs for specific errors
 
