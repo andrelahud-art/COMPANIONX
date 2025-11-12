@@ -5,12 +5,13 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "prisma generate",
+    "build": "prisma generate --schema=./prisma/schema.prisma",
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx src/seed.ts",
     "studio": "prisma studio",
-    "generate": "prisma generate"
+    "generate": "prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.8.1",
