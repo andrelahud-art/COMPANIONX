@@ -4,7 +4,7 @@ import { locales } from './i18n';
 export default createMiddleware({
   locales,
   defaultLocale: 'es',
-  localePrefix: 'as-needed',
+  localePrefix: 'always', // Always show locale in URL (e.g., /es, /en)
 });
 
 export const config = {
