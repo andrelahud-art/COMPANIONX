@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@companionx/db';
+import type { Prisma } from '@companionx/db';
 import { rankCandidates, type CompanionCandidate } from '@companionx/utils';
 import { z } from 'zod';
 
@@ -36,6 +37,8 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: CompanionWhere = {
+    // Build where clause
+    const where: Prisma.CompanionProfileWhereInput = {
       isActive: true,
       user: {
         isActive: true,
@@ -69,6 +72,13 @@ export async function GET(request: NextRequest) {
     } satisfies CompanionInclude;
 
     const companions = await prisma.companionProfile.findMany({
+    } satisfies Prisma.CompanionProfileInclude;
+
+    type CompanionWithUser = Prisma.CompanionProfileGetPayload<{
+      include: typeof companionInclude;
+    }>;
+
+    const companions: CompanionWithUser[] = await prisma.companionProfile.findMany({
       where,
       take: 50,
       include: companionInclude,
