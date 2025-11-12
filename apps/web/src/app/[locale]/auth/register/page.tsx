@@ -94,7 +94,7 @@ export default function RegisterPage() {
                     name="role"
                     value="VISITOR"
                     checked={formData.role === 'VISITOR'}
-                    onChange={(e) => setFormData({ ...formData, role: 'VISITOR' })}
+                    onChange={() => setFormData({ ...formData, role: 'VISITOR' })}
                     className="mr-2"
                   />
                   Visitante
@@ -105,7 +105,7 @@ export default function RegisterPage() {
                     name="role"
                     value="COMPANION"
                     checked={formData.role === 'COMPANION'}
-                    onChange={(e) => setFormData({ ...formData, role: 'COMPANION' })}
+                    onChange={() => setFormData({ ...formData, role: 'COMPANION' })}
                     className="mr-2"
                   />
                   Acompañante
