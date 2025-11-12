@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, Prisma } from '@companionx/db';
-import { generateEmbedding, rankCandidates, type CompanionCandidate } from '@companionx/utils';
+import { rankCandidates, type CompanionCandidate } from '@companionx/utils';
 import { z } from 'zod';
 
 const searchSchema = z.object({
@@ -25,13 +25,6 @@ export async function GET(request: NextRequest) {
       maxPriceMXN: searchParams.get('maxPriceMXN') ? parseInt(searchParams.get('maxPriceMXN')!) : undefined,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10,
     });
-
-    let embedding: number[] | null = null;
-
-    // Generate embedding if query provided
-    if (params.query) {
-      embedding = await generateEmbedding(params.query);
-    }
 
     // Build where clause
     const where: Prisma.CompanionProfileWhereInput = {
