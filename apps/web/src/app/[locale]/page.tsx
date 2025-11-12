@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { GradientButton } from '@/components/ui/gradient-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Shield, MapPin, CreditCard } from 'lucide-react';
 
@@ -36,14 +37,14 @@ export default function LandingPage() {
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/onboarding/visitor">
-            <Button size="lg" className="text-lg px-8 py-6">
+            <GradientButton className="text-lg px-8 py-6">
               {t('landing.hero.ctaVisitor')}
-            </Button>
+            </GradientButton>
           </Link>
           <Link href="/onboarding/companion">
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+            <GradientButton variant="variant" className="text-lg px-8 py-6">
               {t('landing.hero.ctaCompanion')}
-            </Button>
+            </GradientButton>
           </Link>
         </div>
 
