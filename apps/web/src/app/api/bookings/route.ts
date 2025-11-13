@@ -25,20 +25,31 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = createBookingSchema.parse(body);
 
+    const from = new Date(data.from);
+    const to = new Date(data.to);
+
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from >= to) {
+      return NextResponse.json({ error: 'Invalid time range' }, { status: 400 });
+    }
+
     // Get companion profile
     const companion = await prisma.companionProfile.findUnique({
       where: { id: data.companionId },
       include: { user: true },
     });
 
-    if (!companion || !companion.isActive) {
+    if (!companion || !companion.isActive || companion.user.isBanned) {
       return NextResponse.json({ error: 'Companion not found or inactive' }, { status: 404 });
     }
 
-    // Calculate pricing
-    const from = new Date(data.from);
-    const to = new Date(data.to);
+    if (companion.userId === authUser.id) {
+      return NextResponse.json({ error: 'Cannot book yourself' }, { status: 400 });
+    }
+
     const durationHours = calculateDurationHours(from, to);
+    if (durationHours <= 0) {
+      return NextResponse.json({ error: 'Duration must be greater than zero' }, { status: 400 });
+    }
 
     let priceMXN: number;
 
@@ -56,37 +67,86 @@ export async function POST(request: NextRequest) {
     const platformFeeMXN = calculatePlatformFee(priceMXN);
     const companionPayoutMXN = calculateCompanionPayout(priceMXN);
 
-    // Create booking
-    const booking = await prisma.booking.create({
-      data: {
-        visitorId: authUser.id,
-        companionId: companion.userId,
-        city: data.city,
-        from,
-        to,
-        durationHours,
-        priceMXN,
-        platformFeeMXN,
-        companionPayoutMXN,
-        notes: data.notes,
-        status: 'PENDING',
-      },
-    });
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const conflicting = await tx.booking.count({
+          where: {
+            OR: [
+              { visitorId: authUser.id },
+              { companionId: companion.userId },
+            ],
+            status: { in: ['PENDING', 'PAID', 'IN_PROGRESS'] },
+            AND: [{ from: { lt: to } }, { to: { gt: from } }],
+          },
+        });
 
-    return NextResponse.json({
-      success: true,
-      booking: {
-        id: booking.id,
-        companionId: booking.companionId,
-        city: booking.city,
-        from: booking.from,
-        to: booking.to,
-        durationHours: booking.durationHours,
-        priceMXN: booking.priceMXN,
-        platformFeeMXN: booking.platformFeeMXN,
-        status: booking.status,
-      },
-    });
+        if (conflicting > 0) {
+          throw new Error('CONFLICT');
+        }
+
+        const availabilitySlot = await tx.availability.findFirst({
+          where: {
+            companionId: companion.id,
+            isBooked: false,
+            from: { lte: from },
+            to: { gte: to },
+          },
+        });
+
+        if (!availabilitySlot) {
+          throw new Error('NO_AVAILABILITY');
+        }
+
+        const booking = await tx.booking.create({
+          data: {
+            visitorId: authUser.id,
+            companionId: companion.userId,
+            city: data.city,
+            from,
+            to,
+            durationHours,
+            priceMXN,
+            platformFeeMXN,
+            companionPayoutMXN,
+            notes: data.notes,
+            status: 'PENDING',
+          },
+        });
+
+        await tx.availability.update({
+          where: { id: availabilitySlot.id },
+          data: { isBooked: true },
+        });
+
+        return booking;
+      });
+
+      return NextResponse.json({
+        success: true,
+        booking: {
+          id: result.id,
+          companionId: result.companionId,
+          city: result.city,
+          from: result.from,
+          to: result.to,
+          durationHours: result.durationHours,
+          priceMXN: result.priceMXN,
+          platformFeeMXN: result.platformFeeMXN,
+          status: result.status,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'NO_AVAILABILITY') {
+          return NextResponse.json({ error: 'Companion is not available for that time window' }, { status: 409 });
+        }
+        if (error.message === 'CONFLICT') {
+          return NextResponse.json({ error: 'Schedule conflict detected' }, { status: 409 });
+        }
+      }
+
+      throw error;
+    }
   } catch (error) {
     console.error('Create booking error:', error);
     if (error instanceof z.ZodError) {
