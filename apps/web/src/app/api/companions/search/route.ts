@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@companionx/db';
 import type { Prisma } from '@companionx/db';
-import { rankCandidates, type CompanionCandidate } from '@companionx/utils';
+import { generateEmbedding, rankCandidates, type CompanionCandidate } from '@companionx/utils';
 import { z } from 'zod';
 
 const searchSchema = z.object({
@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
       maxPriceMXN: searchParams.get('maxPriceMXN') ? parseInt(searchParams.get('maxPriceMXN')!) : undefined,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10,
     });
+
+    const targetDate = params.date ? new Date(params.date) : undefined;
 
     // Build where clause
     const where: Prisma.CompanionProfileWhereInput = {
@@ -59,6 +61,18 @@ export async function GET(request: NextRequest) {
           isBanned: true,
         },
       },
+      availability: targetDate
+        ? {
+            where: {
+              isBooked: false,
+              from: { lte: targetDate },
+              to: { gte: targetDate },
+            },
+          }
+        : {
+            orderBy: { from: 'asc' },
+            take: 5,
+          },
     } satisfies Prisma.CompanionProfileInclude;
 
     type CompanionWithUser = Prisma.CompanionProfileGetPayload<{
@@ -70,6 +84,37 @@ export async function GET(request: NextRequest) {
       take: 50,
       include: companionInclude,
     });
+
+    // Pre-compute similarity using embeddings if query provided
+    let queryEmbedding: number[] | null = null;
+    if (params.query) {
+      try {
+        queryEmbedding = await generateEmbedding(params.query);
+      } catch (error) {
+        console.warn('Failed to generate search embedding:', error);
+      }
+    }
+
+    const similarityMap = new Map<string, number>();
+    if (queryEmbedding) {
+      const normalize = (vector: number[]) => {
+        const norm = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+        return vector.map((value) => value / (norm || 1));
+      };
+
+      const normalizedQuery = normalize(queryEmbedding);
+
+      companions.forEach((companion) => {
+        const embedding = (companion as any).embedding as number[] | null | undefined;
+        if (!embedding || embedding.length === 0) {
+          return;
+        }
+
+        const normalizedEmbedding = normalize(embedding);
+        const similarity = normalizedEmbedding.reduce((sum, value, index) => sum + value * (normalizedQuery[index] ?? 0), 0);
+        similarityMap.set(companion.id, similarity);
+      });
+    }
 
     // Map to CompanionCandidate format
     const candidates: CompanionCandidate[] = companions.map((companion) => ({
@@ -90,7 +135,13 @@ export async function GET(request: NextRequest) {
       isVerified: companion.isVerified,
       kycLevel: Number(companion.user.kycLevel.replace('V', '')),
       isBanned: companion.user.isBanned,
-      similarityScore: 0, // TODO: Compute from pgvector
+      similarityScore: similarityMap.get(companion.id) ?? 0,
+      isAvailable: targetDate ? companion.availability.length > 0 : undefined,
+      availabilityWindows: companion.availability.map((slot) => ({
+        from: slot.from,
+        to: slot.to,
+        city: slot.city,
+      })),
     }));
 
     // Apply ranking
@@ -101,6 +152,7 @@ export async function GET(request: NextRequest) {
         targetCity: params.city || '',
         maxBudgetMXN: params.maxPriceMXN,
         needsVehicle: params.hasVehicle,
+        targetDate,
       }
     );
 

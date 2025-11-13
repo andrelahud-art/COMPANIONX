@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@companionx/db';
 import { createServiceClient } from '@/lib/supabase/server';
+import { syncCompanionEmbedding, syncVisitorEmbedding } from '@/lib/embeddings';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -16,6 +17,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = registerSchema.parse(body);
+
+    // Prevent duplicate accounts
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
+    }
 
     const supabase = createServiceClient();
 
@@ -45,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Create role-specific profile
     if (data.role === 'COMPANION') {
-      await prisma.companionProfile.create({
+      const companionProfile = await prisma.companionProfile.create({
         data: {
           userId: user.id,
           cities: [],
@@ -55,13 +66,22 @@ export async function POST(request: NextRequest) {
           isActive: false, // Needs to complete onboarding
         },
       });
+
+      // Best-effort embedding sync
+      syncCompanionEmbedding(companionProfile.id).catch((error) => {
+        console.warn('Failed to sync companion embedding:', error);
+      });
     } else {
-      await prisma.visitorProfile.create({
+      const visitorProfile = await prisma.visitorProfile.create({
         data: {
           userId: user.id,
           fifaCities: [],
           interests: [],
         },
+      });
+
+      syncVisitorEmbedding(visitorProfile.id).catch((error) => {
+        console.warn('Failed to sync visitor embedding:', error);
       });
     }
 
