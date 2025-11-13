@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { Providers } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -48,7 +49,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-180.png" />
       </head>
       <body className={inter.className}>
-        {children}
+        <Providers>{children}</Providers>
         <script
           dangerouslySetInnerHTML={{
             __html: `
