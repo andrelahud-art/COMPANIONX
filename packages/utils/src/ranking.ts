@@ -45,6 +45,8 @@ export interface CompanionCandidate {
   isVerified: boolean;
   kycLevel: number;
   isBanned: boolean;
+  isAvailable?: boolean;
+  availabilityWindows?: { from: Date; to: Date; city: string }[];
   // From pgvector similarity
   similarityScore?: number;
   // Computed distance (if coordinates available)
@@ -90,7 +92,7 @@ export function rankCandidates(
     const breakdown = {
       language: scoreLanguageMatch(candidate.languages, context.preferredLanguages, weights.language),
       city: scoreCityMatch(candidate.cities, candidate.baseCity, context.targetCity, weights.city),
-      availability: 0, // TODO: Check availability table
+      availability: scoreAvailability(candidate, context.targetDate, weights.availability),
       distance: scoreDistance(candidate.distanceKm, weights.distance),
       rating: scoreRating(candidate.rating, candidate.ratingsCount, weights.rating),
       price: scorePricing(candidate.hourlyRateMXN, context.maxBudgetMXN, weights.price),
@@ -159,6 +161,34 @@ function scoreCityMatch(
   }
 
   return 0;
+}
+
+function scoreAvailability(
+  candidate: CompanionCandidate,
+  targetDate: Date | undefined,
+  weight: number
+): number {
+  if (!targetDate) {
+    return 0;
+  }
+
+  if (candidate.isAvailable === false) {
+    return -weight; // Penalize explicit unavailability
+  }
+
+  if (candidate.isAvailable) {
+    return weight;
+  }
+
+  if (!candidate.availabilityWindows || candidate.availabilityWindows.length === 0) {
+    return 0;
+  }
+
+  const match = candidate.availabilityWindows.some((slot) => {
+    return slot.from <= targetDate && slot.to >= targetDate;
+  });
+
+  return match ? weight * 0.6 : -weight * 0.5;
 }
 
 function scoreDistance(distanceKm: number | undefined, weight: number): number {

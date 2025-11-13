@@ -22,6 +22,35 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = sendMessageSchema.parse(body);
 
+    // Ensure there is a booking relationship between the users
+    const booking = data.bookingId
+      ? await prisma.booking.findUnique({
+          where: { id: data.bookingId },
+        })
+      : await prisma.booking.findFirst({
+          where: {
+            OR: [
+              { visitorId: authUser.id, companionId: data.toUserId },
+              { visitorId: data.toUserId, companionId: authUser.id },
+            ],
+            status: { in: ['PENDING', 'PAID', 'IN_PROGRESS', 'COMPLETED'] },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+    if (!booking) {
+      return NextResponse.json({ error: 'Messaging requires an active booking' }, { status: 403 });
+    }
+
+    if (
+      booking.visitorId !== authUser.id &&
+      booking.visitorId !== data.toUserId &&
+      booking.companionId !== authUser.id &&
+      booking.companionId !== data.toUserId
+    ) {
+      return NextResponse.json({ error: 'Users are not part of the same booking' }, { status: 403 });
+    }
+
     // Moderate content
     const moderation = await moderateContent(data.content);
 
@@ -31,7 +60,7 @@ export async function POST(request: NextRequest) {
         fromUserId: authUser.id,
         toUserId: data.toUserId,
         content: data.content,
-        bookingId: data.bookingId,
+        bookingId: booking.id,
         moderated: true,
         flagged: moderation.flagged,
         flagReason: moderation.flagged ? moderation.categories.join(', ') : null,
@@ -78,6 +107,20 @@ export async function GET(request: NextRequest) {
 
     if (!withUserId) {
       return NextResponse.json({ error: 'withUserId required' }, { status: 400 });
+    }
+
+    const hasBooking = await prisma.booking.count({
+      where: {
+        OR: [
+          { visitorId: authUser.id, companionId: withUserId },
+          { visitorId: withUserId, companionId: authUser.id },
+        ],
+        status: { in: ['PENDING', 'PAID', 'IN_PROGRESS', 'COMPLETED'] },
+      },
+    });
+
+    if (hasBooking === 0) {
+      return NextResponse.json({ error: 'Conversation not allowed without a booking' }, { status: 403 });
     }
 
     // Fetch messages between users
